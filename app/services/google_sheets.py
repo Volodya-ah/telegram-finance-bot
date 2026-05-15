@@ -106,3 +106,73 @@ def append_operation_to_sheet(operation: dict) -> None:
     ]
 
     worksheet.append_row(row, value_input_option="USER_ENTERED")
+def get_unique_categories() -> list[dict]:
+    """
+    Возвращает уникальные пары:
+    Группа + Категория
+
+    Нужно для выбора категории при добавлении подкатегорий.
+    """
+
+    categories = get_categories()
+    unique_items = {}
+
+    for item in categories:
+        key = item["category"].lower()
+
+        if key not in unique_items:
+            unique_items[key] = {
+                "group": item["group"],
+                "category": item["category"],
+            }
+
+    return list(unique_items.values())
+
+
+def find_category_by_name(category_name: str) -> dict | None:
+    """
+    Ищем категорию по названию без учета регистра.
+    """
+
+    if not category_name:
+        return None
+
+    category_name_lower = category_name.strip().lower()
+    unique_categories = get_unique_categories()
+
+    for item in unique_categories:
+        if item["category"].lower() == category_name_lower:
+            return item
+
+    return None
+
+
+def get_subcategories_for_category(category_name: str) -> list[str]:
+    """
+    Возвращает список подкатегорий для категории.
+    """
+
+    categories = get_categories()
+    result = []
+
+    for item in categories:
+        if item["category"].lower() == category_name.lower():
+            result.append(item["subcategory"])
+
+    return result
+
+
+def append_category_row(group: str, category: str, subcategory: str) -> None:
+    """
+    Добавляет строку в лист 'Категории'.
+    """
+
+    worksheet = get_worksheet("Категории")
+
+    row = [
+        group,
+        category,
+        subcategory,
+    ]
+
+    worksheet.append_row(row, value_input_option="USER_ENTERED")

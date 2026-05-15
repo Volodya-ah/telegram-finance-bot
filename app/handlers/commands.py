@@ -104,6 +104,7 @@ async def help_handler(message: Message) -> None:
         "Команды:\n"
         "/start — запуск бота\n"
         "/categories — список доступных подкатегорий\n"
+        "/add_subcategories — добавить подкатегории\n"
         "/sheet — ссылка на Google-таблицу\n"
         "/whoami — узнать свой Telegram ID\n"
         "/help — помощь"
