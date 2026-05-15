@@ -59,30 +59,41 @@ def build_operation(parsed_expense: dict) -> dict:
     }
 
 
-@router.message()
-async def expense_handler(message: Message) -> None:
-    if await deny_if_not_allowed(message):
-        return
+def split_expense_lines(text: str) -> list[str]:
+    """
+    Разбиваем сообщение на отдельные строки расходов.
 
-    parsed_expense = parse_expense(message.text)
+    Пример:
+    1200 Связь май
+    3000 Хостинг сайт
 
-    if not parsed_expense:
-        await message.answer("Ошибка ❌. Проверьте запись или обратитесь в поддержку!")
-        return
+    Вернет:
+    ["1200 Связь май", "3000 Хостинг сайт"]
+    """
 
-    try:
-        operation = build_operation(parsed_expense)
+    if not text:
+        return []
 
-        if not operation["subcategory"]:
-            await message.answer(
-                "Ошибка ❌. Не нашел подкатегорию в сообщении.\n\n"
-                "Проверьте доступные подкатегории командой /categories"
-            )
-            return
+    lines = []
 
-        append_operation_to_sheet(operation)
+    for line in text.splitlines():
+        clean_line = line.strip()
 
-        await message.answer(
+        if clean_line:
+            lines.append(clean_line)
+
+    return lines
+
+
+def build_success_summary(operations: list[dict], failed_lines: list[str]) -> str:
+    """
+    Формируем короткий ответ пользователю после обработки расходов.
+    """
+
+    if len(operations) == 1 and not failed_lines:
+        operation = operations[0]
+
+        return (
             "Транзакция записана ✅\n\n"
             f"Дата: {operation['date']}\n"
             f"Сумма: {format_amount_for_user(operation['amount'])}\n"
@@ -92,6 +103,67 @@ async def expense_handler(message: Message) -> None:
             f"Комментарий: {operation['comment']}"
         )
 
-    except Exception as error:
-        print(f"Ошибка при обработке операции: {error}")
+    text = ""
+
+    if operations:
+        text += f"Записано операций: {len(operations)} ✅\n"
+
+    if failed_lines:
+        if text:
+            text += "\n"
+
+        text += "Не удалось записать:\n"
+
+        for line in failed_lines:
+            text += f"- {line}\n"
+
+        text += "\nПроверьте формат записи или доступные подкатегории командой /categories"
+
+    return text.strip()
+
+
+@router.message()
+async def expense_handler(message: Message) -> None:
+    if await deny_if_not_allowed(message):
+        return
+
+    expense_lines = split_expense_lines(message.text)
+
+    if not expense_lines:
         await message.answer("Ошибка ❌. Проверьте запись или обратитесь в поддержку!")
+        return
+
+    successful_operations = []
+    failed_lines = []
+
+    for line in expense_lines:
+        parsed_expense = parse_expense(line)
+
+        if not parsed_expense:
+            failed_lines.append(line)
+            continue
+
+        try:
+            operation = build_operation(parsed_expense)
+
+            if not operation["subcategory"]:
+                failed_lines.append(line)
+                continue
+
+            append_operation_to_sheet(operation)
+            successful_operations.append(operation)
+
+        except Exception as error:
+            print(f"Ошибка при обработке операции: {error}")
+            failed_lines.append(line)
+
+    if not successful_operations and failed_lines:
+        await message.answer(
+            "Ошибка ❌. Не удалось записать операции.\n\n"
+            "Проверьте формат записи или доступные подкатегории командой /categories"
+        )
+        return
+
+    await message.answer(
+        build_success_summary(successful_operations, failed_lines)
+    )
