@@ -17,6 +17,22 @@ router = Router()
 
 
 add_subcategory_sessions = {}
+def has_add_subcategory_session(user_id: int | None) -> bool:
+    if user_id is None:
+        return False
+
+    return user_id in add_subcategory_sessions
+
+
+def clear_add_subcategory_session(user_id: int | None) -> bool:
+    if user_id is None:
+        return False
+
+    if user_id in add_subcategory_sessions:
+        del add_subcategory_sessions[user_id]
+        return True
+
+    return False
 
 
 def build_categories_list_text() -> str:
