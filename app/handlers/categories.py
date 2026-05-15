@@ -4,6 +4,12 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
+from app.keyboards.start import (
+    ADD_SUBCATEGORIES_BUTTON,
+    get_main_menu_keyboard,
+    get_scenario_keyboard,
+)
+
 from app.services.access import deny_if_not_allowed
 from app.services.google_sheets import (
     append_category_row,
@@ -75,6 +81,7 @@ def parse_subcategories(text: str) -> list[str]:
 
 
 @router.message(Command("add_subcategories"))
+@router.message(lambda message: message.text == ADD_SUBCATEGORIES_BUTTON)
 async def add_subcategories_start_handler(message: Message) -> None:
     if await deny_if_not_allowed(message):
         return
@@ -92,7 +99,8 @@ async def add_subcategories_start_handler(message: Message) -> None:
     await message.answer(
         "Добавление подкатегорий.\n\n"
         f"{build_categories_list_text()}\n\n"
-        "Напишите название категории, куда нужно добавить подкатегории."
+        "Напишите название категории, куда нужно добавить подкатегории.",
+        reply_markup=get_scenario_keyboard(),
     )
 
 
@@ -131,7 +139,8 @@ async def add_subcategories_flow_handler(message: Message) -> None:
             f"Категория выбрана: {category['category']}\n\n"
             "Введите подкатегории через запятую или с новой строки:\n\n"
             "Например:\n"
-            "Курьер, Почта"
+            "Курьер, Почта",
+            reply_markup=get_scenario_keyboard(),
         )
         return
 
@@ -144,7 +153,7 @@ async def add_subcategories_flow_handler(message: Message) -> None:
         if not new_subcategories:
             await message.answer(
                 "Ошибка ❌. Не удалось распознать подкатегории.\n\n"
-                "Введите одну или несколько подкатегорий через запятую."
+                "Введите одну или несколько подкатегорий через запятую.",
             )
             return
 
@@ -181,4 +190,7 @@ async def add_subcategories_flow_handler(message: Message) -> None:
             for item in skipped:
                 response += f"- {item}\n"
 
-        await message.answer(response.strip())
+        await message.answer(
+           response.strip(),
+           reply_markup=get_main_menu_keyboard(),
+        )
