@@ -80,7 +80,7 @@ async def add_subcategories_start_handler(message: Message) -> None:
     )
 
 
-@router.message()
+@router.message(lambda message: message.from_user and message.from_user.id in add_subcategory_sessions)
 async def add_subcategories_flow_handler(message: Message) -> None:
     user_id = message.from_user.id if message.from_user else None
 
