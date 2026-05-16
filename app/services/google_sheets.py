@@ -25,7 +25,7 @@ def get_worksheet(spreadsheet_id: str, sheet_name: str):
 
 
 def get_categories(spreadsheet_id: str) -> list[dict]:
-    worksheet = get_worksheet(spreadsheet_id, "Категории")
+    worksheet = get_worksheet(spreadsheet_id, "Статьи")
     rows = worksheet.get_all_records()
 
     categories = []
@@ -148,7 +148,7 @@ def append_category_row(
     category: str,
     subcategory: str,
 ) -> None:
-    worksheet = get_worksheet(spreadsheet_id, "Категории")
+    worksheet = get_worksheet(spreadsheet_id, "Статьи")
 
     row = [
         group,

@@ -17,6 +17,9 @@ from app.keyboards.start import (
     get_main_menu_keyboard,
     get_start_keyboard,
 )
+from app.database.clients import create_or_update_client
+from app.services.google_drive import copy_template_spreadsheet
+
 from app.services.access import deny_if_not_allowed
 from app.services.google_sheets import get_categories
 
@@ -70,28 +73,83 @@ async def start_here_handler(message: Message) -> None:
     if await deny_if_not_allowed(message):
         return
 
+    existing_client = get_client_from_message(message)
+
+    if existing_client:
+        await message.answer(
+            "Вы уже подключены ✅\n\n"
+            "Ваша Google-таблица уже создана.\n\n"
+            "Открыть таблицу можно кнопкой «📊 Таблица» или командой:\n"
+            "/sheet\n\n"
+            "Главное меню доступно ниже.",
+            reply_markup=get_main_menu_keyboard(),
+        )
+        return
+
+    telegram_user = message.from_user
+
+    if not telegram_user:
+        await message.answer("Ошибка ❌. Не удалось определить пользователя.")
+        return
+
     await message.answer(
-       "Как начать:\n\n"
-       "1. Для вас будет создана Google-таблица для учета расходов.\n"
-       "Открыть таблицу можно командой:\n"
-       "/sheet\n\n"
-       "2. Сначала нужно настроить статьи расходов.\n"
-       "Я пока учусь и не создаю новые статьи самостоятельно, "
-       "поэтому с настройкой статей помогает Владимир: @vova_ah\n\n"
-       "3. После настройки статей вы можете сами добавлять подстатьи командой:\n"
-       "/add_subcategories\n\n"
-       "4. Когда статьи и подстатьи настроены, просто напишите расход:\n"
-       "25 000 Реклама май\n\n"
-       "Можно отправить несколько расходов списком:\n"
-       "1200 Связь май\n"
-       "3000 Хостинг сайт\n\n"
-       "5. Если вы начали действие и хотите выйти, нажмите ↩️ Назад в меню.\n\n"
-       "Посмотреть доступные статьи и подстатьи:\n"
-       "/categories\n\n"
-       "Полная инструкция:\n"
-       "/help",
-       reply_markup=get_main_menu_keyboard(),
+        "Минутку, создаю Google-таблицу для вашего учета ⏳"
     )
+
+    try:
+        username = telegram_user.username
+        first_name = telegram_user.first_name
+        telegram_id = telegram_user.id
+
+        client_name = first_name or "Client"
+
+        if username:
+            spreadsheet_title = f"Finance Bot — {client_name} (@{username}) — {telegram_id}"
+        else:
+            spreadsheet_title = f"Finance Bot — {client_name} — {telegram_id}"
+
+        new_sheet = copy_template_spreadsheet(spreadsheet_title)
+
+        client = create_or_update_client(
+            telegram_id=telegram_id,
+            username=username,
+            first_name=first_name,
+            spreadsheet_id=new_sheet["spreadsheet_id"],
+        )
+
+        await message.answer(
+            "Готово ✅\n\n"
+            "Я создал для вас Google-таблицу для учета расходов.\n\n"
+            "В таблицу уже добавлен базовый набор статей и подстатей, "
+            "чтобы вы могли сразу попробовать учет.\n\n"
+            "Открыть таблицу можно кнопкой «📊 Таблица» или командой:\n"
+            "/sheet\n\n"
+            "Посмотреть доступные статьи и подстатьи:\n"
+            "/categories\n\n"
+            "Чтобы добавить новые подстатьи:\n"
+            "/add_subcategories\n\n"
+            "Когда статьи и подстатьи настроены, просто напишите расход:\n"
+            "25 000 Реклама май\n\n"
+            "Можно отправить несколько расходов списком:\n"
+            "1200 Связь май\n"
+            "3000 Кофе встреча\n\n"
+            "Пока я учусь, группы и статьи помогает настраивать Владимир: @vova_ah",
+            reply_markup=get_main_menu_keyboard(),
+        )
+
+        print(
+            "Новый клиент создан ✅ "
+            f"telegram_id={client['telegram_id']} "
+            f"spreadsheet_id={client['spreadsheet_id']}"
+        )
+
+    except Exception as error:
+        print(f"Ошибка при создании клиентской таблицы: {error}")
+
+        await message.answer(
+            "Ошибка ❌. Не удалось создать таблицу автоматически.\n\n"
+            "Пожалуйста, напишите Владимиру: @vova_ah"
+        )
 
 @router.message(Command("menu"))
 async def menu_handler(message: Message) -> None:
