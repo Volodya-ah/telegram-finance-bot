@@ -3,8 +3,6 @@ import re
 import gspread
 from google.oauth2.service_account import Credentials
 
-from app.config import SPREADSHEET_ID
-
 
 def get_google_client():
     scopes = [
@@ -20,14 +18,14 @@ def get_google_client():
     return gspread.authorize(credentials)
 
 
-def get_worksheet(sheet_name: str):
+def get_worksheet(spreadsheet_id: str, sheet_name: str):
     client = get_google_client()
-    spreadsheet = client.open_by_key(SPREADSHEET_ID)
+    spreadsheet = client.open_by_key(spreadsheet_id)
     return spreadsheet.worksheet(sheet_name)
 
 
-def get_categories() -> list[dict]:
-    worksheet = get_worksheet("Категории")
+def get_categories(spreadsheet_id: str) -> list[dict]:
+    worksheet = get_worksheet(spreadsheet_id, "Категории")
     rows = worksheet.get_all_records()
 
     categories = []
@@ -51,19 +49,11 @@ def get_categories() -> list[dict]:
     return categories
 
 
-def find_category_by_comment(comment: str) -> dict | None:
-    """
-    Ищем подкатегорию в комментарии.
-
-    Примеры:
-    "Реклама" -> Подкатегория: Реклама, Комментарий: ""
-    "Реклама май" -> Подкатегория: Реклама, Комментарий: "май"
-    """
-
+def find_category_by_comment(comment: str, spreadsheet_id: str) -> dict | None:
     if not comment:
         return None
 
-    categories = get_categories()
+    categories = get_categories(spreadsheet_id)
 
     for item in categories:
         subcategory = item["subcategory"]
@@ -85,8 +75,8 @@ def find_category_by_comment(comment: str) -> dict | None:
     return None
 
 
-def append_operation_to_sheet(operation: dict) -> None:
-    worksheet = get_worksheet("Журнал операций")
+def append_operation_to_sheet(operation: dict, spreadsheet_id: str) -> None:
+    worksheet = get_worksheet(spreadsheet_id, "Журнал операций")
 
     row = [
         operation["id"],
@@ -106,15 +96,10 @@ def append_operation_to_sheet(operation: dict) -> None:
     ]
 
     worksheet.append_row(row, value_input_option="USER_ENTERED")
-def get_unique_categories() -> list[dict]:
-    """
-    Возвращает уникальные пары:
-    Группа + Категория
 
-    Нужно для выбора категории при добавлении подкатегорий.
-    """
 
-    categories = get_categories()
+def get_unique_categories(spreadsheet_id: str) -> list[dict]:
+    categories = get_categories(spreadsheet_id)
     unique_items = {}
 
     for item in categories:
@@ -129,16 +114,12 @@ def get_unique_categories() -> list[dict]:
     return list(unique_items.values())
 
 
-def find_category_by_name(category_name: str) -> dict | None:
-    """
-    Ищем категорию по названию без учета регистра.
-    """
-
+def find_category_by_name(category_name: str, spreadsheet_id: str) -> dict | None:
     if not category_name:
         return None
 
     category_name_lower = category_name.strip().lower()
-    unique_categories = get_unique_categories()
+    unique_categories = get_unique_categories(spreadsheet_id)
 
     for item in unique_categories:
         if item["category"].lower() == category_name_lower:
@@ -147,12 +128,11 @@ def find_category_by_name(category_name: str) -> dict | None:
     return None
 
 
-def get_subcategories_for_category(category_name: str) -> list[str]:
-    """
-    Возвращает список подкатегорий для категории.
-    """
-
-    categories = get_categories()
+def get_subcategories_for_category(
+    category_name: str,
+    spreadsheet_id: str,
+) -> list[str]:
+    categories = get_categories(spreadsheet_id)
     result = []
 
     for item in categories:
@@ -162,12 +142,13 @@ def get_subcategories_for_category(category_name: str) -> list[str]:
     return result
 
 
-def append_category_row(group: str, category: str, subcategory: str) -> None:
-    """
-    Добавляет строку в лист 'Категории'.
-    """
-
-    worksheet = get_worksheet("Категории")
+def append_category_row(
+    spreadsheet_id: str,
+    group: str,
+    category: str,
+    subcategory: str,
+) -> None:
+    worksheet = get_worksheet(spreadsheet_id, "Категории")
 
     row = [
         group,

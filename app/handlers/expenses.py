@@ -4,6 +4,10 @@ from aiogram import Router
 from aiogram.types import Message
 
 from app.services.access import deny_if_not_allowed
+from app.services.client_context import (
+    answer_client_not_connected,
+    get_client_from_message,
+)
 from app.services.google_sheets import (
     append_operation_to_sheet,
     find_category_by_comment,
@@ -18,12 +22,12 @@ from app.services.parser import (
 router = Router()
 
 
-def build_operation(parsed_expense: dict) -> dict:
+def build_operation(parsed_expense: dict, spreadsheet_id: str) -> dict:
     now = datetime.now()
     operation_id = f"exp_{now.strftime('%Y%m%d_%H%M%S_%f')}"
 
     original_comment = parsed_expense["comment"]
-    matched_category = find_category_by_comment(original_comment)
+    matched_category = find_category_by_comment(original_comment, spreadsheet_id)
 
     group = ""
     category = ""
@@ -60,17 +64,6 @@ def build_operation(parsed_expense: dict) -> dict:
 
 
 def split_expense_lines(text: str) -> list[str]:
-    """
-    Разбиваем сообщение на отдельные строки расходов.
-
-    Пример:
-    1200 Связь май
-    3000 Хостинг сайт
-
-    Вернет:
-    ["1200 Связь май", "3000 Хостинг сайт"]
-    """
-
     if not text:
         return []
 
@@ -86,10 +79,6 @@ def split_expense_lines(text: str) -> list[str]:
 
 
 def build_success_summary(operations: list[dict], failed_lines: list[str]) -> str:
-    """
-    Формируем короткий ответ пользователю после обработки расходов.
-    """
-
     if len(operations) == 1 and not failed_lines:
         operation = operations[0]
 
@@ -127,6 +116,20 @@ async def expense_handler(message: Message) -> None:
     if await deny_if_not_allowed(message):
         return
 
+    if message.text and message.text.startswith("/"):
+        await message.answer(
+            "Не понял команду.\n\n"
+            "Чтобы открыть главное меню, напишите /menu"
+        )
+        return    
+
+    client = get_client_from_message(message)
+
+    if not client:
+        await answer_client_not_connected(message)
+        return
+
+    spreadsheet_id = client["spreadsheet_id"]
     expense_lines = split_expense_lines(message.text)
 
     if not expense_lines:
@@ -144,13 +147,13 @@ async def expense_handler(message: Message) -> None:
             continue
 
         try:
-            operation = build_operation(parsed_expense)
+            operation = build_operation(parsed_expense, spreadsheet_id)
 
             if not operation["subcategory"]:
                 failed_lines.append(line)
                 continue
 
-            append_operation_to_sheet(operation)
+            append_operation_to_sheet(operation, spreadsheet_id)
             successful_operations.append(operation)
 
         except Exception as error:

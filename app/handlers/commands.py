@@ -2,7 +2,10 @@ from aiogram import F, Router
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message
 
-from app.config import SPREADSHEET_ID
+from app.services.client_context import (
+    answer_client_not_connected,
+    get_client_from_message,
+)
 from app.handlers.categories import clear_add_subcategory_session
 from app.keyboards.start import (
     ADD_SUBCATEGORIES_BUTTON,
@@ -90,6 +93,16 @@ async def start_here_handler(message: Message) -> None:
         reply_markup=get_main_menu_keyboard(),
     )
 
+@router.message(Command("menu"))
+async def menu_handler(message: Message) -> None:
+    if await deny_if_not_allowed(message):
+        return
+
+    await message.answer(
+        get_main_menu_text(),
+        reply_markup=get_main_menu_keyboard(),
+    )
+
 @router.message(F.text == BACK_TO_MENU_BUTTON)
 async def back_to_menu_handler(message: Message) -> None:
     if await deny_if_not_allowed(message):
@@ -130,11 +143,22 @@ async def categories_handler(message: Message) -> None:
     if await deny_if_not_allowed(message):
         return
 
+    client = get_client_from_message(message)
+
+    if not client:
+        await answer_client_not_connected(message)
+        return
+
+    spreadsheet_id = client["spreadsheet_id"]
+
     try:
-        categories = get_categories()
+        categories = get_categories(spreadsheet_id)
 
         if not categories:
-            await message.answer("Категории пока не добавлены.")
+            await message.answer(
+                "Категории пока не добавлены.",
+                reply_markup=get_main_menu_keyboard(),
+            )
             return
 
         grouped_categories = {}
@@ -144,28 +168,43 @@ async def categories_handler(message: Message) -> None:
             category = item["category"]
             subcategory = item["subcategory"]
 
-            key = f"{group} / {category}"
+            if group not in grouped_categories:
+                grouped_categories[group] = {}
 
-            if key not in grouped_categories:
-                grouped_categories[key] = []
+            if category not in grouped_categories[group]:
+                grouped_categories[group][category] = []
 
-            grouped_categories[key].append(subcategory)
+            grouped_categories[group][category].append(subcategory)
 
         text = "Доступные подкатегории:\n\n"
 
-        for key, subcategories in grouped_categories.items():
-            text += f"{key}:\n"
+        for group, categories_by_group in grouped_categories.items():
+            text += f"{group}\n\n"
 
-            for subcategory in subcategories:
-                text += f"- {subcategory}\n"
+            for category, subcategories in categories_by_group.items():
+                text += f"{category}:\n"
 
-            text += "\n"
+                for subcategory in subcategories:
+                    text += f"- {subcategory}\n"
 
-        await message.answer(text.strip())
+                text += "\n"
+
+        text += (
+            "Чтобы добавить расход, используйте подкатегорию:\n"
+            "25 000 Реклама май"
+        )
+
+        await message.answer(
+            text.strip(),
+            reply_markup=get_main_menu_keyboard(),
+        )
 
     except Exception as error:
         print(f"Ошибка при получении категорий: {error}")
-        await message.answer("Ошибка ❌. Не удалось получить список категорий.")
+        await message.answer(
+            "Ошибка ❌. Не удалось получить список категорий.",
+            reply_markup=get_main_menu_keyboard(),
+        )
 
 
 @router.message(Command("help"))
@@ -202,9 +241,14 @@ async def sheet_handler(message: Message) -> None:
     if await deny_if_not_allowed(message):
         return
 
-    sheet_url = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/edit"
+    client = get_client_from_message(message)
+
+    if not client:
+        await answer_client_not_connected(message)
+        return
 
     await message.answer(
         "Ваша Google-таблица:\n\n"
-        f"{sheet_url}"
+        f"{client['spreadsheet_url']}",
+        reply_markup=get_main_menu_keyboard(),
     )

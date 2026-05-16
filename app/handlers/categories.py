@@ -10,6 +10,11 @@ from app.keyboards.start import (
     get_scenario_keyboard,
 )
 
+from app.services.client_context import (
+    answer_client_not_connected,
+    get_client_from_message,
+)
+
 from app.services.access import deny_if_not_allowed
 from app.services.google_sheets import (
     append_category_row,
@@ -41,8 +46,8 @@ def clear_add_subcategory_session(user_id: int | None) -> bool:
     return False
 
 
-def build_categories_list_text() -> str:
-    categories = get_unique_categories()
+def build_categories_list_text(spreadsheet_id: str) -> str:
+    categories = get_unique_categories(spreadsheet_id)
 
     if not categories:
         return "Категории пока не добавлены."
@@ -86,6 +91,14 @@ async def add_subcategories_start_handler(message: Message) -> None:
     if await deny_if_not_allowed(message):
         return
 
+    client = get_client_from_message(message)
+
+    if not client:
+        await answer_client_not_connected(message)
+        return
+
+    spreadsheet_id = client["spreadsheet_id"]
+
     user_id = message.from_user.id if message.from_user else None
 
     if user_id is None:
@@ -93,12 +106,13 @@ async def add_subcategories_start_handler(message: Message) -> None:
         return
 
     add_subcategory_sessions[user_id] = {
-        "step": "waiting_category",
+    "step": "waiting_category",
+    "spreadsheet_id": spreadsheet_id,
     }
 
     await message.answer(
         "Добавление подкатегорий.\n\n"
-        f"{build_categories_list_text()}\n\n"
+        f"{build_categories_list_text(spreadsheet_id)}\n\n"
         "Напишите название категории, куда нужно добавить подкатегории.",
         reply_markup=get_scenario_keyboard(),
     )
@@ -113,6 +127,8 @@ async def add_subcategories_flow_handler(message: Message) -> None:
 
     session = add_subcategory_sessions.get(user_id)
 
+    spreadsheet_id = session["spreadsheet_id"]
+
     if not session:
         return
 
@@ -122,12 +138,12 @@ async def add_subcategories_flow_handler(message: Message) -> None:
     text = message.text.strip() if message.text else ""
 
     if session["step"] == "waiting_category":
-        category = find_category_by_name(text)
+        category = find_category_by_name(text, spreadsheet_id)
 
         if not category:
             await message.answer(
                 "Ошибка ❌. Такой категории не найдено.\n\n"
-                f"{build_categories_list_text()}"
+                f"{build_categories_list_text(spreadsheet_id)}"
             )
             return
 
@@ -157,7 +173,7 @@ async def add_subcategories_flow_handler(message: Message) -> None:
             )
             return
 
-        existing_subcategories = get_subcategories_for_category(category)
+        existing_subcategories = get_subcategories_for_category(category, spreadsheet_id)
         existing_lower = {item.lower() for item in existing_subcategories}
 
         added = []
@@ -168,7 +184,7 @@ async def add_subcategories_flow_handler(message: Message) -> None:
                 skipped.append(subcategory)
                 continue
 
-            append_category_row(group, category, subcategory)
+            append_category_row(spreadsheet_id, group, category, subcategory)
             added.append(subcategory)
             existing_lower.add(subcategory.lower())
 
