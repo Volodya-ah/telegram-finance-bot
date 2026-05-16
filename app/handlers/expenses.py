@@ -87,8 +87,8 @@ def build_success_summary(operations: list[dict], failed_lines: list[str]) -> st
             f"Дата: {operation['date']}\n"
             f"Сумма: {format_amount_for_user(operation['amount'])}\n"
             f"Группа: {operation['group']}\n"
-            f"Категория: {operation['category']}\n"
-            f"Подкатегория: {operation['subcategory']}\n"
+            f"Статья: {operation['category']}\n"
+            f"Подстатья: {operation['subcategory']}\n"
             f"Комментарий: {operation['comment']}"
         )
 
@@ -106,7 +106,7 @@ def build_success_summary(operations: list[dict], failed_lines: list[str]) -> st
         for line in failed_lines:
             text += f"- {line}\n"
 
-        text += "\nПроверьте формат записи или доступные подкатегории командой /categories"
+        text += "\nПроверьте формат записи или доступные подстатьи командой /categories"
 
     return text.strip()
 
@@ -163,7 +163,7 @@ async def expense_handler(message: Message) -> None:
     if not successful_operations and failed_lines:
         await message.answer(
             "Ошибка ❌. Не удалось записать операции.\n\n"
-            "Проверьте формат записи или доступные подкатегории командой /categories"
+            "Проверьте формат записи или доступные подстатьи командой /categories"
         )
         return
 

@@ -50,9 +50,9 @@ def build_categories_list_text(spreadsheet_id: str) -> str:
     categories = get_unique_categories(spreadsheet_id)
 
     if not categories:
-        return "Категории пока не добавлены."
+        return "Статьи пока не добавлены."
 
-    text = "Выберите категорию из списка:\n\n"
+    text = "Выберите статью из списка:\n\n"
 
     for item in categories:
         text += f"- {item['category']}\n"
@@ -111,9 +111,9 @@ async def add_subcategories_start_handler(message: Message) -> None:
     }
 
     await message.answer(
-        "Добавление подкатегорий.\n\n"
+        "Добавление подстатей.\n\n"
         f"{build_categories_list_text(spreadsheet_id)}\n\n"
-        "Напишите название категории, куда нужно добавить подкатегории.",
+        "Напишите название статьи, куда нужно добавить подстатьи.",
         reply_markup=get_scenario_keyboard(),
     )
 
@@ -142,7 +142,7 @@ async def add_subcategories_flow_handler(message: Message) -> None:
 
         if not category:
             await message.answer(
-                "Ошибка ❌. Такой категории не найдено.\n\n"
+                "Ошибка ❌. Такая статья не найдена.\n\n"
                 f"{build_categories_list_text(spreadsheet_id)}"
             )
             return
@@ -152,8 +152,8 @@ async def add_subcategories_flow_handler(message: Message) -> None:
         session["category"] = category["category"]
 
         await message.answer(
-            f"Категория выбрана: {category['category']}\n\n"
-            "Введите подкатегории через запятую или с новой строки:\n\n"
+            f"Статья выбрана: {category['category']}\n\n"
+            "Введите подстатьи через запятую или с новой строки:\n\n"
             "Например:\n"
             "Курьер, Почта",
             reply_markup=get_scenario_keyboard(),
@@ -168,8 +168,8 @@ async def add_subcategories_flow_handler(message: Message) -> None:
 
         if not new_subcategories:
             await message.answer(
-                "Ошибка ❌. Не удалось распознать подкатегории.\n\n"
-                "Введите одну или несколько подкатегорий через запятую.",
+                "Ошибка ❌. Не удалось распознать подстатьи.\n\n"
+                "Введите одну или несколько подстатей через запятую.",
             )
             return
 
@@ -194,7 +194,7 @@ async def add_subcategories_flow_handler(message: Message) -> None:
 
         if added:
             response += "Добавлено ✅\n\n"
-            response += f"Категория: {category}\n"
+            response += f"Статья: {category}\n"
             for item in added:
                 response += f"- {item}\n"
 

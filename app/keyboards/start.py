@@ -3,8 +3,8 @@ from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
 START_HERE_BUTTON = "🚀 Начни здесь"
 
-CATEGORIES_BUTTON = "📋 Категории"
-ADD_SUBCATEGORIES_BUTTON = "➕ Добавить подкатегории"
+CATEGORIES_BUTTON = "📋 Статьи"
+ADD_SUBCATEGORIES_BUTTON = "➕ Добавить подстатьи"
 SHEET_BUTTON = "📊 Таблица"
 HELP_BUTTON = "❓ Помощь"
 

@@ -32,8 +32,8 @@ def get_categories(spreadsheet_id: str) -> list[dict]:
 
     for row in rows:
         group = str(row.get("Группа", "")).strip()
-        category = str(row.get("Категория", "")).strip()
-        subcategory = str(row.get("Подкатегория", "")).strip()
+        category = str(row.get("Статья", "")).strip()
+        subcategory = str(row.get("Подстатья", "")).strip()
 
         if not group or not category or not subcategory:
             continue
