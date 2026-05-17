@@ -8,6 +8,7 @@ from app.services.client_context import (
     answer_client_not_connected,
     get_client_from_message,
 )
+from app.keyboards.start import get_main_menu_keyboard
 from app.services.google_sheets import (
     append_operation_to_sheet,
     find_category_by_comment,
@@ -118,10 +119,11 @@ async def expense_handler(message: Message) -> None:
 
     if message.text and message.text.startswith("/"):
         await message.answer(
-            "Не понял команду.\n\n"
-            "Чтобы открыть главное меню, напишите /menu"
+           "Не понял команду.\n\n"
+           "Чтобы открыть главное меню, напишите /menu",
+           reply_markup=get_main_menu_keyboard(),
         )
-        return    
+        returnn    
 
     client = get_client_from_message(message)
 
@@ -133,8 +135,11 @@ async def expense_handler(message: Message) -> None:
     expense_lines = split_expense_lines(message.text)
 
     if not expense_lines:
-        await message.answer("Ошибка ❌. Проверьте запись или обратитесь в поддержку!")
-        return
+       await message.answer(
+        "Ошибка ❌. Проверьте запись или обратитесь в поддержку!",
+        reply_markup=get_main_menu_keyboard(),
+       )
+       return
 
     successful_operations = []
     failed_lines = []
@@ -161,12 +166,14 @@ async def expense_handler(message: Message) -> None:
             failed_lines.append(line)
 
     if not successful_operations and failed_lines:
-        await message.answer(
-            "Ошибка ❌. Не удалось записать операции.\n\n"
-            "Проверьте формат записи или доступные подстатьи командой /categories"
-        )
-        return
+       await message.answer(
+          "Ошибка ❌. Не удалось записать операции.\n\n"
+          "Проверьте формат записи или доступные подстатьи командой /categories",
+          reply_markup=get_main_menu_keyboard(),
+       )
+       return
 
     await message.answer(
-        build_success_summary(successful_operations, failed_lines)
+       build_success_summary(successful_operations, failed_lines),
+       reply_markup=get_main_menu_keyboard(),
     )
