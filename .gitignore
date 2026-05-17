@@ -4,3 +4,5 @@ credentials.json
 __pycache__/
 *.pyc
 clients.db
+oauth_credentials.json
+token.json
