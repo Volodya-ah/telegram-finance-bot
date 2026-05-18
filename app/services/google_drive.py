@@ -109,6 +109,16 @@ def copy_template_spreadsheet(title: str) -> dict:
         sendNotificationEmail=False,
     ).execute()
 
+    # Даем клиенту возможность открыть таблицу по ссылке.
+    # Только просмотр, чтобы клиент случайно не сломал структуру таблицы.
+    service.permissions().create(
+        fileId=spreadsheet_id,
+        body={
+            "type": "anyone",
+            "role": "reader",
+        },
+    ).execute()
+
     if ADMIN_GOOGLE_EMAIL:
         service.permissions().create(
             fileId=spreadsheet_id,
