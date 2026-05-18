@@ -6,3 +6,5 @@ __pycache__/
 clients.db
 oauth_credentials.json
 token.json
+clients_test.db
+.env.*
