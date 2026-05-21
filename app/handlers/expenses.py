@@ -123,7 +123,7 @@ async def expense_handler(message: Message) -> None:
            "Чтобы открыть главное меню, напишите /menu",
            reply_markup=get_main_menu_keyboard(),
         )
-        returnn    
+        return    
 
     client = get_client_from_message(message)
 
