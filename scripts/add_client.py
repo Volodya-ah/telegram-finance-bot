@@ -1,6 +1,7 @@
 import argparse
 
 from app.database.clients import create_or_update_client
+from app.database.db import DATABASE_PATH
 
 
 def main() -> None:
@@ -37,6 +38,8 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+    
+    print(f"Using database: {DATABASE_PATH}")
 
     client = create_or_update_client(
         telegram_id=args.telegram_id,

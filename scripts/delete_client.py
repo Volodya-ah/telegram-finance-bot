@@ -1,6 +1,6 @@
 import argparse
 
-from app.database.db import get_connection, init_db
+from app.database.db import DATABASE_PATH, get_connection, init_db
 
 
 def main() -> None:
@@ -16,6 +16,8 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+
+    print(f"Using database: {DATABASE_PATH}")
 
     init_db()
 

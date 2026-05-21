@@ -2,6 +2,11 @@ import os
 import sqlite3
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
 
 DATABASE_PATH = Path(os.getenv("CLIENTS_DB_PATH", "clients.db"))
 
