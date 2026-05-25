@@ -107,7 +107,11 @@ def build_success_summary(operations: list[dict], failed_lines: list[str]) -> st
         for line in failed_lines:
             text += f"- {line}\n"
 
-        text += "\nПроверьте формат записи или доступные подстатьи командой /categories"
+        text += (
+            "\nПроверьте незаписанные строки:\n"
+            "— сумма должна быть в начале строки;\n"
+            "— подстатья должна быть в списке «📋 Статьи»."
+        )
 
     return text.strip()
 
@@ -135,11 +139,17 @@ async def expense_handler(message: Message) -> None:
     expense_lines = split_expense_lines(message.text)
 
     if not expense_lines:
-       await message.answer(
-        "Ошибка ❌. Проверьте запись или обратитесь в поддержку!",
-        reply_markup=get_main_menu_keyboard(),
-       )
-       return
+        await message.answer(
+            "Не понял расход ❌\n\n"
+            "Напишите сумму в начале строки, затем подстатью и комментарий.\n\n"
+            "Примеры:\n"
+            "100 Кофе\n"
+            "1200 Связь май\n"
+            "25000 Реклама май\n\n"
+            "Если нужной подстатьи нет, добавьте ее через «➕ Добавить подстатьи».",
+            reply_markup=get_main_menu_keyboard(),
+        )
+        return
 
     successful_operations = []
     failed_lines = []
@@ -166,12 +176,17 @@ async def expense_handler(message: Message) -> None:
             failed_lines.append(line)
 
     if not successful_operations and failed_lines:
-       await message.answer(
-          "Ошибка ❌. Не удалось записать операции.\n\n"
-          "Проверьте формат записи или доступные подстатьи командой /categories",
-          reply_markup=get_main_menu_keyboard(),
-       )
-       return
+        await message.answer(
+            "Не удалось записать расход ❌\n\n"
+            "Проверьте:\n"
+            "— сумма стоит первой;\n"
+            "— подстатья есть в списке «📋 Статьи»;\n"
+            "— если подстатьи нет, добавьте ее через «➕ Добавить подстатьи».\n\n"
+            "Пример правильной записи:\n"
+            "100 Кофе",
+            reply_markup=get_main_menu_keyboard(),
+        )
+        return
 
     await message.answer(
        build_success_summary(successful_operations, failed_lines),

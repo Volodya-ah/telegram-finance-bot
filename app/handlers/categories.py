@@ -111,9 +111,13 @@ async def add_subcategories_start_handler(message: Message) -> None:
     }
 
     await message.answer(
-        "Добавление подстатей.\n\n"
+        "➕ Добавление подстатей\n\n"
+        "Подстатья — это слово, по которому бот понимает расход.\n"
+        "Например: Кофе, Такси, Реклама, Интернет.\n\n"
         f"{build_categories_list_text(spreadsheet_id)}\n\n"
-        "Напишите название статьи, куда нужно добавить подстатьи.",
+        "Напишите название статьи, куда добавить новую подстатью.\n\n"
+        "Например:\n"
+        "Прочее",
         reply_markup=get_scenario_keyboard(),
     )
 
@@ -142,8 +146,10 @@ async def add_subcategories_flow_handler(message: Message) -> None:
 
         if not category:
             await message.answer(
-                "Ошибка ❌. Такая статья не найдена.\n\n"
-                f"{build_categories_list_text(spreadsheet_id)}"
+                "Не нашел такую статью ❌\n\n"
+                "Проверьте название и выберите одну из статей ниже:\n\n"
+                f"{build_categories_list_text(spreadsheet_id)}",
+                reply_markup=get_scenario_keyboard(),
             )
             return
 
@@ -152,9 +158,12 @@ async def add_subcategories_flow_handler(message: Message) -> None:
         session["category"] = category["category"]
 
         await message.answer(
-            f"Статья выбрана: {category['category']}\n\n"
-            "Введите подстатьи через запятую или с новой строки:\n\n"
-            "Например:\n"
+            f"Статья выбрана: {category['category']} ✅\n\n"
+            "Теперь напишите одну или несколько подстатей.\n"
+            "Их можно будет использовать при записи расходов.\n\n"
+            "Примеры:\n"
+            "Кофе\n\n"
+            "или несколько сразу:\n"
             "Курьер, Почта",
             reply_markup=get_scenario_keyboard(),
         )
@@ -168,8 +177,12 @@ async def add_subcategories_flow_handler(message: Message) -> None:
 
         if not new_subcategories:
             await message.answer(
-                "Ошибка ❌. Не удалось распознать подстатьи.\n\n"
-                "Введите одну или несколько подстатей через запятую.",
+                "Не понял подстатью ❌\n\n"
+                "Напишите одну подстатью или несколько через запятую.\n\n"
+                "Примеры:\n"
+                "Кофе\n"
+                "Курьер, Почта",
+                reply_markup=get_scenario_keyboard(),
             )
             return
 
