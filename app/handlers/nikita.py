@@ -33,4 +33,4 @@ async def open_orders_command(message: Message) -> None:
         return
 
     report_text = format_open_orders_report(orders)
-    await message.answer(report_text)
+    await message.answer(report_text, parse_mode="HTML")
