@@ -4,6 +4,7 @@ from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 START_HERE_BUTTON = "🚀 Начни здесь"
 
 CATEGORIES_BUTTON = "📋 Статьи"
+OPEN_ORDERS_BUTTON = "📌 Заявки в работе"
 ADD_SUBCATEGORIES_BUTTON = "➕ Добавить подстатьи"
 SHEET_BUTTON = "📊 Таблица"
 HELP_BUTTON = "❓ Помощь"
@@ -23,18 +24,26 @@ def get_start_keyboard() -> ReplyKeyboardMarkup:
     )
 
 
-def get_main_menu_keyboard() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [
-                KeyboardButton(text=CATEGORIES_BUTTON),
-                KeyboardButton(text=ADD_SUBCATEGORIES_BUTTON),
-            ],
-            [
-                KeyboardButton(text=SHEET_BUTTON),
-                KeyboardButton(text=HELP_BUTTON),
-            ],
+def get_main_menu_keyboard(custom_mode: str = "core") -> ReplyKeyboardMarkup:
+    keyboard = [
+        [
+            KeyboardButton(text=CATEGORIES_BUTTON),
+            KeyboardButton(text=ADD_SUBCATEGORIES_BUTTON),
         ],
+        [
+            KeyboardButton(text=SHEET_BUTTON),
+            KeyboardButton(text=HELP_BUTTON),
+        ],
+    ]
+
+    if custom_mode == "nikita":
+        keyboard.insert(
+            1,
+            [KeyboardButton(text=OPEN_ORDERS_BUTTON)],
+        )
+
+    return ReplyKeyboardMarkup(
+        keyboard=keyboard,
         resize_keyboard=True,
         input_field_placeholder="Напишите расход или выберите действие",
     )

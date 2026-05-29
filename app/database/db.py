@@ -30,10 +30,18 @@ def init_db() -> None:
                 spreadsheet_url TEXT NOT NULL,
                 status TEXT NOT NULL DEFAULT 'active',
                 plan TEXT NOT NULL DEFAULT 'test',
+                custom_mode TEXT NOT NULL DEFAULT 'core',
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             )
             """
         )
+        columns = connection.execute("PRAGMA table_info(clients)").fetchall()
+        column_names = [column["name"] for column in columns]
+
+        if "custom_mode" not in column_names:
+            connection.execute(
+                "ALTER TABLE clients ADD COLUMN custom_mode TEXT NOT NULL DEFAULT 'core'"
+            )
 
         connection.commit()

@@ -97,7 +97,7 @@ async def start_here_handler(message: Message) -> None:
            "Если нужной подстатьи нет, нажмите «➕ Добавить подстатьи».\n\n"
            "Важно: доходы пока можно добавить вручную в таблице "
            "для проверки финансового результата.",
-           reply_markup=get_main_menu_keyboard(),
+           reply_markup=get_main_menu_keyboard(existing_client.get("custom_mode", "core")),
         )
         return
 
@@ -149,7 +149,7 @@ async def start_here_handler(message: Message) -> None:
             "1200 Связь май\n"
             "3000 Кофе встреча\n\n"
             "Пока я учусь, группы и статьи помогает настраивать Владимир: @vova_ah",
-            reply_markup=get_main_menu_keyboard(),
+            reply_markup=get_main_menu_keyboard(client.get("custom_mode", "core")),
         )
 
         print(
@@ -171,9 +171,12 @@ async def menu_handler(message: Message) -> None:
     if await deny_if_not_allowed(message):
         return
 
+    client = get_client_from_message(message)
+    custom_mode = client.get("custom_mode", "core") if client else "core"
+
     await message.answer(
         get_main_menu_text(),
-        reply_markup=get_main_menu_keyboard(),
+        reply_markup=get_main_menu_keyboard(custom_mode),
     )
 
 @router.message(F.text == BACK_TO_MENU_BUTTON)
@@ -186,7 +189,7 @@ async def back_to_menu_handler(message: Message) -> None:
 
     await message.answer(
         "Вернулся в главное меню ✅",
-        reply_markup=get_main_menu_keyboard(),
+        reply_markup=get_main_menu_keyboard(existing_client.get("custom_mode", "core")),
     )
 
 @router.message(Command("cancel"))
@@ -230,7 +233,7 @@ async def categories_handler(message: Message) -> None:
         if not categories:
             await message.answer(
                 "Статьи пока не добавлены.",
-                reply_markup=get_main_menu_keyboard(),
+                reply_markup=get_main_menu_keyboard(existing_client.get("custom_mode", "core")),
             )
             return
 
@@ -270,14 +273,14 @@ async def categories_handler(message: Message) -> None:
 
         await message.answer(
             text.strip(),
-            reply_markup=get_main_menu_keyboard(),
+            reply_markup=get_main_menu_keyboard(existing_client.get("custom_mode", "core")),
         )
 
     except Exception as error:
         print(f"Ошибка при получении статей: {error}")
         await message.answer(
             "Ошибка ❌. Не удалось получить список статей.",
-            reply_markup=get_main_menu_keyboard(),
+            reply_markup=get_main_menu_keyboard(existing_client.get("custom_mode", "core")),
         )
 
 
@@ -308,7 +311,7 @@ async def help_handler(message: Message) -> None:
         "Расходы попадают в «Журнал операций», а итог — в «Фин отчет».\n\n"
         "Важно: сейчас бот записывает расходы. "
         "Доходы можно добавить вручную в таблице для проверки финансового результата.",
-        reply_markup=get_main_menu_keyboard(),
+        reply_markup=get_main_menu_keyboard(existing_client.get("custom_mode", "core")),
     )   
 
 
@@ -327,5 +330,5 @@ async def sheet_handler(message: Message) -> None:
     await message.answer(
         "Ваша Google-таблица:\n\n"
         f"{client['spreadsheet_url']}",
-        reply_markup=get_main_menu_keyboard(),
+        reply_markup=get_main_menu_keyboard(existing_client.get("custom_mode", "core")),
     )

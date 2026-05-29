@@ -14,6 +14,7 @@ def create_or_update_client(
     first_name: str | None = None,
     status: str = "active",
     plan: str = "test",
+    custom_mode: str = "core",
 ) -> dict:
     """
     Создает клиента или обновляет его, если telegram_id уже существует.
@@ -41,6 +42,7 @@ def create_or_update_client(
                     spreadsheet_url = ?,
                     status = ?,
                     plan = ?,
+                    custom_mode = ?,
                     updated_at = ?
                 WHERE telegram_id = ?
                 """,
@@ -66,10 +68,11 @@ def create_or_update_client(
                     spreadsheet_url,
                     status,
                     plan,
+                    custom_mode,
                     created_at,
                     updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     telegram_id,
@@ -79,6 +82,7 @@ def create_or_update_client(
                     spreadsheet_url,
                     status,
                     plan,
+                    custom_mode,
                     now,
                     now,
                 ),
